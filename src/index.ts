@@ -1,4 +1,8 @@
-import BalancingTree from "./classes/BalancingTree";
+import ListLabelingArray from "./classes/ListLabelingArray";
 
-const tree = new BalancingTree<number>([1, 2, 3, 4, 5, 6, 7, 8]);
-tree.printASCII();
+const lla = new ListLabelingArray(16, 2, 0.5, 0.5);
+lla.insert(1);
+lla.insert(2);
+lla.insert(-2);
+lla.insert(5);
+lla.beautifulPrint();

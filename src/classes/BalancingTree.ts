@@ -1,132 +1,137 @@
-class BalancingTree<T> {
-    private subarray: Array<T>;
-    private size: number;
-    private left: BalancingTree<T> | null;
-    private right: BalancingTree<T> | null;
-    private isLeaf: boolean;
+class Node<T> {
+    public val: T;
+    public size: number = 0;
+    public left: Node<T> | null;
+    public right: Node<T> | null;
+    public isLeaf: boolean = false;
 
-    constructor(subarray: Array<T>) {
-        this.subarray = subarray;
-        this.size = subarray.length;
+    constructor(val: T, originalStartIndex: number = 0) {
+        this.val = val;
         this.left = null;
         this.right = null;
-        this.isLeaf = false;
+    }
+}
 
-        if (this.subarray.length > 1) {
+class BalancingTree<T> {
+    private root: Node<Array<T>>;
+
+    constructor(sourceArray: Array<T>, stopAtLength: number = 1) {
+        this.root = this.buildTree(sourceArray, stopAtLength);
+    }
+
+    private buildTree(subarray: Array<T>, stopAtLength: number): Node<Array<T>> {
+        const node = new Node(subarray);
+
+        // Stop subdividing when we reach or go below stopAtLength
+        if (subarray.length > stopAtLength) {
             const mid = Math.floor(subarray.length / 2);
-            this.left = new BalancingTree(subarray.slice(0, mid));
-            this.right = new BalancingTree(subarray.slice(mid));
-            this.isLeaf = false;
-        } else if (this.subarray.length === 1) {
-            // Single-element tree is a leaf
-            this.isLeaf = true;
+            node.left = this.buildTree(subarray.slice(0, mid), stopAtLength);
+            node.right = this.buildTree(subarray.slice(mid), stopAtLength);
+            node.isLeaf = false;
+        } else if (subarray.length <= stopAtLength && subarray.length > 0) {
+            // When we reach the stop length or below, mark as leaf
+            node.isLeaf = true;
+            node.left = null;
+            node.right = null;
         }
-        // If empty, the caller should avoid constructing it — or you can throw an error here if you want
+
+        // Handle empty arrays (optional - you might want to throw an error instead)
+        if (subarray.length === 0) {
+            node.isLeaf = true;
+        }
+
+        return node;
     }
 
-    printASCII(): void {
-        const lines = this.buildASCIILines();
-        lines.forEach(line => console.log(line));
+    // Helper method to get the root (useful for testing/debugging)
+    public getRoot(): Node<Array<T>> {
+        return this.root;
     }
 
-    private buildASCIILines(): string[] {
-        const nodeLabel = this.isLeaf ? `[${this.subarray.join(", ")}]` : `(${this.subarray.join(", ")})`;
-        
-        // If it's a leaf node, just return the label
-        if (this.isLeaf || (!this.left && !this.right)) {
-            return [nodeLabel];
+    // Print ASCII representation of the tree
+    public printASCII(): void {
+        console.log("Tree Structure:");
+        this.printASCIIHelper(this.root, "", true);
+    }
+
+    private printASCIIHelper(node: Node<Array<T>> | null, prefix: string, isLast: boolean): void {
+        if (node === null) return;
+
+        // Print current node
+        const connector = isLast ? "└── " : "├── ";
+        const nodeValue = `[${node.val.map(item => item === null ? 'x' : item).join(', ')}]`;
+        const nodeDensity = node.size / node.val.length;
+        const nodeInfo = node.isLeaf ? ` (leaf, size: ${node.size}, tau = ${nodeDensity})` : ` (size: ${node.size}, tau = ${nodeDensity})`;
+        console.log(prefix + connector + nodeValue + nodeInfo);
+
+        // Calculate prefix for children
+        const childPrefix = prefix + (isLast ? "    " : "│   ");
+
+        // Print children (left first, then right)
+        if (node.left !== null || node.right !== null) {
+            if (node.left !== null) {
+                this.printASCIIHelper(node.left, childPrefix, node.right === null);
+            }
+            if (node.right !== null) {
+                this.printASCIIHelper(node.right, childPrefix, true);
+            }
         }
+    }
 
-        const leftLines = this.left ? this.left.buildASCIILines() : [];
-        const rightLines = this.right ? this.right.buildASCIILines() : [];
+    public insert(val: T): void {
+        this.insertHelper(this.root, val);
+        return;
+    }
 
-        // Calculate widths
-        const leftWidth = leftLines.length > 0 ? Math.max(...leftLines.map(line => line.length)) : 0;
-        const rightWidth = rightLines.length > 0 ? Math.max(...rightLines.map(line => line.length)) : 0;
-        const nodeLabelWidth = nodeLabel.length;
-
-        // Pad lines to consistent width
-        const paddedLeftLines = leftLines.map(line => line.padEnd(leftWidth));
-        const paddedRightLines = rightLines.map(line => line.padEnd(rightWidth));
-
-        // Calculate positions
-        const leftTreeCenter = Math.floor(leftWidth / 2);
-        const rightTreeCenter = Math.floor(rightWidth / 2);
-        const totalWidth = leftWidth + rightWidth + 3; // 3 for spacing between trees
-        const nodeCenter = Math.floor(totalWidth / 2);
-
-        // Build the result
-        const result: string[] = [];
-
-        // Add the node label centered
-        const nodeLine = " ".repeat(Math.max(0, nodeCenter - Math.floor(nodeLabelWidth / 2))) + nodeLabel;
-        result.push(nodeLine);
-
-        // Add connection lines if we have children
-        if (leftLines.length > 0 || rightLines.length > 0) {
-            // Create the branch line
-            let branchLine = " ".repeat(totalWidth);
-            const branchArray = branchLine.split("");
-
-            if (leftLines.length > 0) {
-                branchArray[leftTreeCenter] = "┌";
-                for (let i = leftTreeCenter + 1; i < nodeCenter; i++) {
-                    branchArray[i] = "─";
-                }
+    private insertHelper(node: Node<Array<T>>, tbi: T): number | void {
+        if (node.isLeaf) {
+            const indexToInsert = this.binarySearch(node.val, tbi);
+            node.size += 1;
+            if(indexToInsert >= node.val.length) {
+                console.log(`can't insert ${tbi} into [${node.val}] at index ${indexToInsert}, it is out of bounds`);
+                return;
             }
-
-            if (rightLines.length > 0) {
-                const rightStart = leftWidth + 3 + rightTreeCenter;
-                branchArray[rightStart] = "┐";
-                for (let i = nodeCenter + 1; i < rightStart; i++) {
-                    branchArray[i] = "─";
-                }
-            }
-
-            if (leftLines.length > 0 && rightLines.length > 0) {
-                branchArray[nodeCenter] = "┴";
-            } else if (leftLines.length > 0) {
-                branchArray[nodeCenter] = "┘";
-            } else if (rightLines.length > 0) {
-                branchArray[nodeCenter] = "└";
-            }
-
-            result.push(branchArray.join(""));
-
-            // Add vertical lines
-            let verticalLine = " ".repeat(totalWidth);
-            const verticalArray = verticalLine.split("");
-            if (leftLines.length > 0) verticalArray[leftTreeCenter] = "│";
-            if (rightLines.length > 0) verticalArray[leftWidth + 3 + rightTreeCenter] = "│";
-            result.push(verticalArray.join(""));
-        }
-
-        // Combine left and right subtrees
-        const maxSubtreeHeight = Math.max(paddedLeftLines.length, paddedRightLines.length);
-        for (let i = 0; i < maxSubtreeHeight; i++) {
-            let line = "";
-            
-            // Add left subtree line (or spaces if no left subtree or line doesn't exist)
-            if (i < paddedLeftLines.length) {
-                line += paddedLeftLines[i];
+            node.val[indexToInsert] = tbi;
+            return;
+        } else {
+            const leftSubArr = node.left?.val;
+            const lastValInLeftSubArr = leftSubArr?.[leftSubArr.length - 1] || 0; // that 0 works only for type number, what can i do?
+            if (node.right && tbi > lastValInLeftSubArr) {
+                this.insertHelper(node.right, tbi);
+                node.size += 1;
+                return;
+            } else if (node.left && tbi <= lastValInLeftSubArr) {
+                this.insertHelper(node.left, tbi);
+                node.size += 1;
+                return;
             } else {
-                line += " ".repeat(leftWidth);
+                return;
             }
+        }
+    }
+
+    binarySearch(subarray: Array<T>, val: T, compareFunction?: (a: T, b: T) => number): number {
+        let array = subarray;
+        let left = 0;
+        let right = array.length - 1;
+
+        // Handle edge cases
+        if (array.length === 0) return 0;
+
+        // Binary search for insertion point
+        while (left <= right) {  // Changed condition to <=
+            const mid = Math.floor((left + right) / 2);
             
-            // Add spacing between subtrees
-            line += "   ";
-            
-            // Add right subtree line (or spaces if no right subtree or line doesn't exist)
-            if (i < paddedRightLines.length) {
-                line += paddedRightLines[i];
+            if (array[mid] >= val || array[mid] === null) {
+                // array[mid] < val, so insertion point is to the right
+                right = mid - 1;
             } else {
-                line += " ".repeat(rightWidth);
+                // array[mid] >= val, so insertion point is at or to the left of mid
+                left = mid + 1;  // This is now correct with the <= condition
             }
-            
-            result.push(line);
         }
 
-        return result;
+        return left;
     }
 }
 
