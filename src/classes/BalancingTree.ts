@@ -48,8 +48,8 @@ class BalancingTree<T> {
         return this.root;
     }
 
-    // Print ASCII representation of the tree
-    public printASCII(): void {
+    // Method to print the tree structure in a simple ASCII format
+    public printSimpleASCII(): void {
         console.log("Tree Structure:");
         this.printASCIIHelper(this.root, "", true);
     }
@@ -61,7 +61,7 @@ class BalancingTree<T> {
         const connector = isLast ? "└── " : "├── ";
         const nodeValue = `[${node.val.map(item => item === null ? 'x' : item).join(', ')}]`;
         const nodeDensity = node.size / node.val.length;
-        const nodeInfo = node.isLeaf ? ` (leaf, size: ${node.size}, tau = ${nodeDensity})` : ` (size: ${node.size}, tau = ${nodeDensity})`;
+        const nodeInfo = node.isLeaf ? ` (leaf, size: ${node.size}, τ = ${nodeDensity.toFixed(2)})` : ` (size: ${node.size}, τ = ${nodeDensity.toFixed(2)})`;
         console.log(prefix + connector + nodeValue + nodeInfo);
 
         // Calculate prefix for children

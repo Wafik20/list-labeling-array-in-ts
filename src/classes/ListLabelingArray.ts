@@ -29,7 +29,7 @@ class ListLabelingArray<T> {
     beautifulPrint(): void {
         console.log(`A list labeling array with N = ${this.N}, C = ${this.C}, window size ${this.windowSize}, TAU_0 = ${this.TAU_0}, TAU_d = ${this.TAU_d}`);
         console.log(this.arr);
-        this.caliberatorTree.printASCII();
+        this.caliberatorTree.printSimpleASCII();
     }
 
     insert(val: T): void {
