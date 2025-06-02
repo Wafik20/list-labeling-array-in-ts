@@ -8,8 +8,7 @@ The List Labeling Array is a data structure that maintains a sorted array with e
 
 ### Key Features
 
-- Efficient insertions with O(log n) complexity
-- Automatic balancing of array segments
+- Efficient insertions with O(log n) amortized.
 - Visual tree representation for debugging
 - Configurable parameters for balancing behavior
 
