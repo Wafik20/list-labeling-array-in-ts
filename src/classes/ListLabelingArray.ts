@@ -8,7 +8,6 @@ class ListLabelingArray<T> {
     public readonly TAU_0: number;
     public readonly TAU_d: number;
     public readonly windowSize: number;
-    
 
     constructor(
         N: number,
@@ -32,10 +31,45 @@ class ListLabelingArray<T> {
         this.caliberatorTree.printSimpleASCII();
     }
 
-    insert(val: T): void {
-        const indexToBeInserted = this.caliberatorTree.insert(val) ?? -1;
-        this.arr[indexToBeInserted] = val;
-        console.log(`Inserted ${val} at index ${indexToBeInserted}`);
+    insert(tbi: T): void {
+        let window = this.caliberatorTree.insert(tbi);
+        window.size += 1;
+        const indexToInsert = this.binarySearch(window.val, tbi);
+        const windowDensity = window.size / window.val.length;
+        window.val[indexToInsert] = tbi;
+        if(windowDensity > this.TAU_d) {
+            console.log(`window ${window} has density ${windowDensity} > ${this.TAU_d}`);
+            this.rebalance(window);
+        }
+    }
+
+    binarySearch(subarray: Array<T>, val: T): number {
+        let array = subarray;
+        let left = 0;
+        let right = array.length - 1;
+
+        // Handle edge cases
+        if (array.length === 0) return 0;
+
+        // Binary search for insertion point
+        while (left <= right) {  // Changed condition to <=
+            const mid = Math.floor((left + right) / 2);
+
+            if (array[mid] >= val || array[mid] === null) {
+                // array[mid] < val, so insertion point is to the right
+                right = mid - 1;
+            } else {
+                // array[mid] >= val, so insertion point is at or to the left of mid
+                left = mid + 1;  // This is now correct with the <= condition
+            }
+        }
+
+        return left;
+    }
+
+    rebalance(window: any): void {
+        console.log(`Rebalancing tree starting at window ${window}`);
+        return;
     }
 }
 

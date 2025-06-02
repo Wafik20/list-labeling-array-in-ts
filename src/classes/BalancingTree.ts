@@ -3,12 +3,18 @@ class Node<T> {
     public size: number = 0;
     public left: Node<T> | null;
     public right: Node<T> | null;
+    public parent: Node<T> | null = null;
     public isLeaf: boolean = false;
 
-    constructor(val: T) {
+    constructor(val: T, parent: Node<T> | null = null) {
+        this.parent = parent;
         this.val = val;
         this.left = null;
         this.right = null;
+    }
+
+    public toString(): string {
+        return `Node(val: ${this.val}, size: ${this.size}, isLeaf: ${this.isLeaf})`;
     }
 }
 
@@ -19,14 +25,14 @@ class BalancingTree<T> {
         this.root = this.buildTree(sourceArray, stopAtLength);
     }
 
-    private buildTree(subarray: Array<T>, stopAtLength: number): Node<Array<T>> {
-        const node = new Node(subarray);
+    private buildTree(subarray: Array<T>, stopAtLength: number, parent: Node<Array<T>> | null = null): Node<Array<T>> {
+        const node = new Node(subarray, parent);
 
         // Stop subdividing when we reach or go below stopAtLength
         if (subarray.length > stopAtLength) {
             const mid = Math.floor(subarray.length / 2);
-            node.left = this.buildTree(subarray.slice(0, mid), stopAtLength);
-            node.right = this.buildTree(subarray.slice(mid), stopAtLength);
+            node.left = this.buildTree(subarray.slice(0, mid), stopAtLength, node);
+            node.right = this.buildTree(subarray.slice(mid), stopAtLength, node);
             node.isLeaf = false;
         } else if (subarray.length <= stopAtLength && subarray.length > 0) {
             // When we reach the stop length or below, mark as leaf
@@ -78,20 +84,13 @@ class BalancingTree<T> {
         }
     }
 
-    public insert(val: T): number | void {
+    public insert(val: T): Node<Array<T>> {
         return this.insertHelper(this.root, val)
     }
 
-    private insertHelper(node: Node<Array<T>>, tbi: T, startIndex: number = 0): number | void {
+    private insertHelper(node: Node<Array<T>>, tbi: T, startIndex: number = 0): Node<Array<T>> {
         if (node.isLeaf) {
-            const indexToInsert = this.binarySearch(node.val, tbi);
-            node.size += 1;
-            if (indexToInsert >= node.val.length) {
-                console.log(`can't insert ${tbi} into [${node.val}] at index ${indexToInsert}, it is out of bounds`);
-                return;
-            }
-            node.val[indexToInsert] = tbi;
-            return startIndex + indexToInsert;
+            return node;
         } else {
             const leftSubArr = node.left?.val;
             const lastValInLeftSubArr = leftSubArr?.[leftSubArr.length - 1] || 0; // that 0 works only for type number, what can i do?
@@ -102,33 +101,9 @@ class BalancingTree<T> {
                 node.size += 1;
                 return this.insertHelper(node.left, tbi, startIndex);
             } else {
-                return;
+                return node;
             }
         }
-    }
-
-    binarySearch(subarray: Array<T>, val: T, compareFunction?: (a: T, b: T) => number): number {
-        let array = subarray;
-        let left = 0;
-        let right = array.length - 1;
-
-        // Handle edge cases
-        if (array.length === 0) return 0;
-
-        // Binary search for insertion point
-        while (left <= right) {  // Changed condition to <=
-            const mid = Math.floor((left + right) / 2);
-
-            if (array[mid] >= val || array[mid] === null) {
-                // array[mid] < val, so insertion point is to the right
-                right = mid - 1;
-            } else {
-                // array[mid] >= val, so insertion point is at or to the left of mid
-                left = mid + 1;  // This is now correct with the <= condition
-            }
-        }
-
-        return left;
     }
 }
 
