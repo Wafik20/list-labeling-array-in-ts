@@ -5,7 +5,7 @@ class Node<T> {
     public right: Node<T> | null;
     public isLeaf: boolean = false;
 
-    constructor(val: T, originalStartIndex: number = 0) {
+    constructor(val: T) {
         this.val = val;
         this.left = null;
         this.right = null;
@@ -78,32 +78,29 @@ class BalancingTree<T> {
         }
     }
 
-    public insert(val: T): void {
-        this.insertHelper(this.root, val);
-        return;
+    public insert(val: T): number | void {
+        return this.insertHelper(this.root, val)
     }
 
-    private insertHelper(node: Node<Array<T>>, tbi: T): number | void {
+    private insertHelper(node: Node<Array<T>>, tbi: T, startIndex: number = 0): number | void {
         if (node.isLeaf) {
             const indexToInsert = this.binarySearch(node.val, tbi);
             node.size += 1;
-            if(indexToInsert >= node.val.length) {
+            if (indexToInsert >= node.val.length) {
                 console.log(`can't insert ${tbi} into [${node.val}] at index ${indexToInsert}, it is out of bounds`);
                 return;
             }
             node.val[indexToInsert] = tbi;
-            return;
+            return startIndex + indexToInsert;
         } else {
             const leftSubArr = node.left?.val;
             const lastValInLeftSubArr = leftSubArr?.[leftSubArr.length - 1] || 0; // that 0 works only for type number, what can i do?
             if (node.right && tbi > lastValInLeftSubArr) {
-                this.insertHelper(node.right, tbi);
                 node.size += 1;
-                return;
+                return this.insertHelper(node.right, tbi, startIndex + (node.left?.val.length || 0));
             } else if (node.left && tbi <= lastValInLeftSubArr) {
-                this.insertHelper(node.left, tbi);
                 node.size += 1;
-                return;
+                return this.insertHelper(node.left, tbi, startIndex);
             } else {
                 return;
             }
@@ -121,7 +118,7 @@ class BalancingTree<T> {
         // Binary search for insertion point
         while (left <= right) {  // Changed condition to <=
             const mid = Math.floor((left + right) / 2);
-            
+
             if (array[mid] >= val || array[mid] === null) {
                 // array[mid] < val, so insertion point is to the right
                 right = mid - 1;
